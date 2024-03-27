@@ -1,0 +1,19 @@
+languageId: plaintext
+command:
+  version: 1
+  spokenForm: chuck nothing
+  action: remove
+  targets:
+    - type: primitive
+      mark: {type: nothing}
+initialState:
+  documentContents: hello world
+  selections:
+    - anchor: {line: 0, character: 11}
+      active: {line: 0, character: 11}
+  marks: {}
+finalState:
+  documentContents: hello world
+  selections:
+    - anchor: {line: 0, character: 11}
+      active: {line: 0, character: 11}

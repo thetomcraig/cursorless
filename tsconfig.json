@@ -1,0 +1,39 @@
+{
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./packages/cheatsheet"
+    },
+    {
+      "path": "./packages/cheatsheet-local"
+    },
+    {
+      "path": "./packages/common"
+    },
+    {
+      "path": "./packages/cursorless-engine"
+    },
+    {
+      "path": "./packages/cursorless-org"
+    },
+    {
+      "path": "./packages/cursorless-org-docs"
+    },
+    {
+      "path": "./packages/cursorless-vscode"
+    },
+    {
+      "path": "./packages/cursorless-vscode-e2e"
+    },
+    {
+      "path": "./packages/meta-updater"
+    },
+    {
+      "path": "./packages/test-harness"
+    },
+    {
+      "path": "./packages/vscode-common"
+    }
+  ]
+}

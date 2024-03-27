@@ -1,0 +1,29 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "[scm]": {
+    "editor.defaultFormatter": "AndreasArvidsson.andreas-talon"
+  },
+  "[talon]": {
+    "editor.defaultFormatter": "wenkokke.tree-sitter-talon"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
+  "typescript.tsc.autoDetect": "off",
+  "cSpell.words": [
+    "Autoformatting",
+    "camelize",
+    "canonicalize",
+    "crosshairs",
+    "eqeqeq",
+    "nonlocal",
+    "pojo",
+    "subword"
+  ],
+  "files.eol": "\n",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "eslint.workingDirectories": [{ "pattern": "packages/*/" }]
+}
