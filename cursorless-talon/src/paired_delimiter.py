@@ -30,6 +30,7 @@ paired_delimiters = {
     "squareBrackets": ["[", "]"],
     "singleQuotes": ["'", "'"],
     "any": ["", ""],
+    "dollarSignAndCurlyBrackets": ["${", "}"],
 }
 
 
