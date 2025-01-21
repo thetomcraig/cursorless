@@ -1,11 +1,15 @@
 languageId: typescript
 command:
-  version: 1
+  version: 6
   spokenForm: take item
-  action: setSelection
-  targets:
-    - type: primitive
-      modifier: {type: containingScope, scopeType: collectionItem}
+  action:
+    name: setSelection
+    target:
+      type: primitive
+      modifiers:
+        - type: containingScope
+          scopeType: {type: collectionItem}
+  usePrePhraseSnapshot: false
 initialState:
   documentContents: |
 
@@ -19,5 +23,5 @@ finalState:
 
     const value = { a: 1, b: 2, c: 3 };
   selections:
-    - anchor: {line: 1, character: 0}
-      active: {line: 1, character: 35}
+    - anchor: {line: 1, character: 6}
+      active: {line: 1, character: 34}

@@ -1,11 +1,15 @@
 languageId: clojure
 command:
-  version: 1
+  version: 6
   spokenForm: change every item
-  action: clearAndSetSelection
-  targets:
-    - type: primitive
-      modifier: {type: containingScope, scopeType: collectionItem, includeSiblings: true}
+  action:
+    name: clearAndSetSelection
+    target:
+      type: primitive
+      modifiers:
+        - type: everyScope
+          scopeType: {type: collectionItem}
+  usePrePhraseSnapshot: false
 initialState:
   documentContents: |-
 
@@ -23,11 +27,10 @@ finalState:
 
     {
         ,
-        ;; hello
         ,
     }
   selections:
     - anchor: {line: 2, character: 4}
       active: {line: 2, character: 4}
-    - anchor: {line: 4, character: 4}
-      active: {line: 4, character: 4}
+    - anchor: {line: 3, character: 4}
+      active: {line: 3, character: 4}

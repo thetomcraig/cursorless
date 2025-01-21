@@ -41,11 +41,13 @@ CursorlessTarget = Union[
     ImplicitTarget,
 ]
 
+InsertionMode = Literal["to", "before", "after"]
+
 
 @dataclass
 class PrimitiveDestination:
     type = "primitive"
-    insertionMode: Literal["to", "before", "after"]
+    insertionMode: InsertionMode
     target: Union[ListTarget, RangeTarget, PrimitiveTarget]
 
 

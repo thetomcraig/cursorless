@@ -1,6 +1,5 @@
 import type {
   Edit,
-  Position,
   Range,
   RevealLineAt,
   Selection,
@@ -53,8 +52,30 @@ export interface TextEditor {
   isEqual(other: TextEditor): boolean;
 }
 
+export interface SetSelectionsOpts {
+  focusEditor?: boolean;
+  revealRange?: boolean;
+}
+
+export type OpenLinkOptions = {
+  openAside: boolean;
+};
+
 export interface EditableTextEditor extends TextEditor {
-  setSelections(selections: Selection[]): Promise<void>;
+  /**
+   * Set the selections in this text editor, optionally focusing the editor
+   * and/or revealing the ranges.
+   *
+   * Note that if your editor requires unique selections, you should deduplicate
+   * them in your implementation of this method.
+   *
+   * @param selections The new selections
+   * @param opts The options for setting the selections
+   */
+  setSelections(
+    selections: Selection[],
+    opts?: SetSelectionsOpts,
+  ): Promise<void>;
 
   options: TextEditorOptions;
 
@@ -89,12 +110,8 @@ export interface EditableTextEditor extends TextEditor {
 
   /**
    * Edit a new new notebook cell above.
-   * @return A promise that resolves to a function that must be applied to any
-   * selections that should be updated as result of this operation. This is a
-   * horrible hack to work around the fact that in vscode the promise resolves
-   * before the edits have actually been performed.
    */
-  editNewNotebookCellAbove(): Promise<(selection: Selection) => Selection>;
+  editNewNotebookCellAbove(): Promise<void>;
 
   /**
    * Edit a new new notebook cell below.
@@ -104,9 +121,9 @@ export interface EditableTextEditor extends TextEditor {
   /**
    * Open link at location.
    * @param location Position or range
-   * @return True if a link was opened
+   * @param options Options for opening the link.
    */
-  openLink(location?: Position | Range): Promise<boolean>;
+  openLink(range: Range, options?: OpenLinkOptions): Promise<void>;
 
   /**
    * Fold ranges
@@ -128,9 +145,8 @@ export interface EditableTextEditor extends TextEditor {
 
   /**
    * Paste clipboard content
-   * @param ranges A list of {@link Range ranges}
    */
-  clipboardPaste(ranges?: Range[]): Promise<void>;
+  clipboardPaste(): Promise<void>;
 
   /**
    * Toggle breakpoints. For each of the descriptors in {@link descriptors},

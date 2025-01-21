@@ -1,18 +1,20 @@
+import type {
+  ScopeSupportFacet,
+  ScopeType,
+  TextualScopeSupportFacet,
+} from "@cursorless/common";
 import {
   asyncSafety,
-  getLanguageScopeSupport,
-  getScopeTestPaths,
-  ScopeSupportFacet,
+  languageScopeSupport,
   scopeSupportFacetInfos,
   ScopeSupportFacetLevel,
-  ScopeType,
   shouldUpdateFixtures,
-  TextualScopeSupportFacet,
   textualScopeSupportFacetInfos,
 } from "@cursorless/common";
+import { getScopeTestPathsRecursively } from "@cursorless/node-common";
 import { getCursorlessApi, openNewEditor } from "@cursorless/vscode-common";
 import { assert } from "chai";
-import { groupBy, uniq } from "lodash";
+import { groupBy, uniq } from "lodash-es";
 import { promises as fsp } from "node:fs";
 import { endToEndTestSetup } from "../endToEndTestSetup";
 import {
@@ -23,10 +25,18 @@ import {
 suite("Scope test cases", async function () {
   endToEndTestSetup(this);
 
-  const testPaths = getScopeTestPaths();
-  const languages = groupBy(testPaths, (test) => test.languageId);
+  const testPaths = getScopeTestPathsRecursively();
 
   if (!shouldUpdateFixtures()) {
+    const languages = groupBy(testPaths, (test) => test.languageId);
+
+    // This handles the case where a language has no tests, but is still listed
+    // in the config. In that case, just using the language ids from the tests
+    // would miss the language entirely even though it appears in the config.
+    for (const language of Object.keys(languageScopeSupport)) {
+      languages[language] ??= [];
+    }
+
     Object.entries(languages).forEach(([languageId, testPaths]) =>
       test(
         `${languageId} facet coverage`,
@@ -60,7 +70,11 @@ async function testLanguageSupport(languageId: string, testedFacets: string[]) {
       return Object.keys(textualScopeSupportFacetInfos);
     }
 
-    const scopeSupport = getLanguageScopeSupport(languageId);
+    const scopeSupport = languageScopeSupport[languageId];
+
+    if (scopeSupport == null) {
+      return [];
+    }
 
     return Object.keys(scopeSupport).filter(
       (facet) =>
@@ -92,13 +106,13 @@ async function testLanguageSupport(languageId: string, testedFacets: string[]) {
 
 async function runTest(file: string, languageId: string, facetId: string) {
   const { ide, scopeProvider } = (await getCursorlessApi()).testHelpers!;
-  const { scopeType, isIteration } = getScopeType(languageId, facetId);
+  const { scopeType, isIteration } = getFacetInfo(languageId, facetId);
   const fixture = (await fsp.readFile(file, "utf8"))
     .toString()
     .replaceAll("\r\n", "\n");
   const delimiterIndex = fixture.match(/^---$/m)?.index;
 
-  assert.isNotNull(
+  assert.isDefined(
     delimiterIndex,
     "Can't find delimiter '---' in scope fixture",
   );
@@ -128,7 +142,7 @@ async function runTest(file: string, languageId: string, facetId: string) {
 
     const scopes = scopeProvider.provideScopeRanges(editor, config);
 
-    return serializeScopeFixture(code, scopes);
+    return serializeScopeFixture(facetId, code, scopes);
   })();
 
   if (shouldUpdateFixtures()) {
@@ -138,26 +152,28 @@ async function runTest(file: string, languageId: string, facetId: string) {
   }
 }
 
-function getScopeType(
+function getFacetInfo(
   languageId: string,
   facetId: string,
 ): {
   scopeType: ScopeType;
   isIteration: boolean;
 } {
-  if (languageId === "textual") {
-    const { scopeType, isIteration } =
-      textualScopeSupportFacetInfos[facetId as TextualScopeSupportFacet];
-    return {
-      scopeType: { type: scopeType },
-      isIteration: isIteration ?? false,
-    };
+  const facetInfo =
+    languageId === "textual"
+      ? textualScopeSupportFacetInfos[facetId as TextualScopeSupportFacet]
+      : scopeSupportFacetInfos[facetId as ScopeSupportFacet];
+
+  if (facetInfo == null) {
+    throw Error(`Missing scope support facet info for: ${facetId}`);
   }
 
-  const { scopeType, isIteration } =
-    scopeSupportFacetInfos[facetId as ScopeSupportFacet];
+  const { scopeType, isIteration } = facetInfo;
+  const fullScopeType =
+    typeof scopeType === "string" ? { type: scopeType } : scopeType;
+
   return {
-    scopeType: { type: scopeType },
+    scopeType: fullScopeType,
     isIteration: isIteration ?? false,
   };
 }

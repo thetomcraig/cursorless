@@ -1,7 +1,7 @@
 import { Range, adjustPosition } from "@cursorless/common";
 import { z } from "zod";
 import { makeRangeFromPositions } from "../../util/nodeSelectors";
-import { MutableQueryCapture } from "./QueryCapture";
+import type { MutableQueryCapture } from "./QueryCapture";
 import { QueryPredicateOperator } from "./QueryPredicateOperator";
 import { q } from "./operatorArgumentSchemaTypes";
 
@@ -62,6 +62,21 @@ class HasMultipleChildrenOfType extends QueryPredicateOperator<HasMultipleChildr
   }
 }
 
+/**
+ * A predicate operator that returns true if the nodes text matched the regular expression
+ */
+class Match extends QueryPredicateOperator<Match> {
+  name = "match?" as const;
+  schema = z.tuple([q.node, q.string]);
+
+  run(nodeInfo: MutableQueryCapture, pattern: string) {
+    const { document, range } = nodeInfo;
+    const regex = new RegExp(pattern, "ds");
+    const text = document.getText(range);
+    return regex.test(text);
+  }
+}
+
 class ChildRange extends QueryPredicateOperator<ChildRange> {
   name = "child-range!" as const;
   schema = z.union([
@@ -92,6 +107,23 @@ class ChildRange extends QueryPredicateOperator<ChildRange> {
     nodeInfo.range = makeRangeFromPositions(
       excludeStart ? start.endPosition : start.startPosition,
       excludeEnd ? end.startPosition : end.endPosition,
+    );
+
+    return true;
+  }
+}
+
+class CharacterRange extends QueryPredicateOperator<CharacterRange> {
+  name = "character-range!" as const;
+  schema = z.union([
+    z.tuple([q.node, q.integer]),
+    z.tuple([q.node, q.integer, q.integer]),
+  ]);
+
+  run(nodeInfo: MutableQueryCapture, startOffset: number, endOffset?: number) {
+    nodeInfo.range = new Range(
+      nodeInfo.range.start.translate(undefined, startOffset),
+      nodeInfo.range.end.translate(undefined, endOffset ?? 0),
     );
 
     return true;
@@ -151,10 +183,12 @@ class TrimEnd extends QueryPredicateOperator<TrimEnd> {
     const { document, range } = nodeInfo;
     const text = document.getText(range);
     const whitespaceLength = text.length - text.trimEnd().length;
-    nodeInfo.range = new Range(
-      range.start,
-      adjustPosition(document, range.end, -whitespaceLength),
-    );
+    if (whitespaceLength > 0) {
+      nodeInfo.range = new Range(
+        range.start,
+        adjustPosition(document, range.end, -whitespaceLength),
+      );
+    }
     return true;
   }
 }
@@ -252,9 +286,11 @@ export const queryPredicateOperators = [
   new NotParentType(),
   new IsNthChild(),
   new ChildRange(),
+  new CharacterRange(),
   new ShrinkToMatch(),
   new AllowMultiple(),
   new InsertionDelimiter(),
   new SingleOrMultilineDelimiter(),
   new HasMultipleChildrenOfType(),
+  new Match(),
 ];

@@ -4,10 +4,26 @@
 
 ;; import javascript.core.scm
 
+;;!! function aaa(bbb = "ddd") {}
+;;!               ^^^--------
+(required_parameter
+  (identifier) @_.leading.endOf
+  value: (_) @value
+  !type
+) @_.domain
+
+;;!! function aaa(bbb: Ccc = "ddd") {}
+;;!               ^^^-------------
+(required_parameter
+  type: (_) @_.leading.endOf
+  value: (_) @value
+) @_.domain
+
 ;;!! function aaa(bbb?: Ccc = "ddd") {}
 ;;!               ^^^--------------
 (optional_parameter
-  (identifier) @name
+  type: (_) @_.leading.endOf
+  value: (_) @value
 ) @_.domain
 
 ;;!! function aaa(bbb: Ccc = "ddd") {}
@@ -16,8 +32,14 @@
   (identifier) @name
 ) @_.domain
 
+;;!! function aaa(bbb?: Ccc) {}
+;;!               ^^^------
+(optional_parameter
+  (identifier) @name
+) @_.domain
+
 ;; Define these here because these node types don't exist in javascript.
-(
+(_
   [
     ;;!! class Foo { foo() {} }
     ;;!              ^^^^^^^^
@@ -44,7 +66,7 @@
     (public_field_definition
       name: (_) @functionName
       value: [
-        (function
+        (function_expression
           !name
         )
         (generator_function
@@ -58,19 +80,19 @@
   ";"? @namedFunction.end @functionName.domain.end @name.domain.end
 )
 
-(
+(_
   ;;!! (public | private | protected) foo = ...;
   ;;!  -----------------------------------------
   (public_field_definition
     name: (_) @name @value.leading.endOf
     !type
-    value: (_)? @value
+    value: (_)? @value @name.trailing.startOf
   ) @_.domain.start
   .
   ";"? @_.domain.end
 )
 
-(
+(_
   ;;!! (public | private | protected) foo: Bar = ...;
   ;;!  ----------------------------------------------
   (public_field_definition
@@ -84,6 +106,18 @@
   .
   ";"? @_.domain.end
 )
+
+(
+  (type_alias_declaration
+    value: (_) @value
+  ) @_.domain
+  (#not-parent-type? @_.domain export_statement)
+)
+(export_statement
+  (type_alias_declaration
+    value: (_) @value
+  )
+) @_.domain
 
 [
   (interface_declaration)
@@ -168,11 +202,23 @@
   (#has-multiple-children-of-type? @_dummy variable_declarator)
 )
 
-;;!! function ccc(aaa: string, bbb?: string) {}
-;;!                    ^^^^^^        ^^^^^^
+;;!! function ccc(aaa: string) {}
+;;!                    ^^^^^^
 (formal_parameters
-  (_
+  (required_parameter
     pattern: (_) @_.leading.endOf
+    type: (_
+      ":"
+      (_) @type
+    )
+  ) @_.domain
+)
+
+;;!! function ccc(aaa?: string) {}
+;;!                     ^^^^^^
+(formal_parameters
+  (optional_parameter
+    "?" @_.leading.endOf
     type: (_
       ":"
       (_) @type
@@ -245,6 +291,15 @@
   (_) @type
 ) @_.domain
 
+;;!! aaa as const
+;;!         ^^^
+;;!     xxxxxxx
+;;!  ----------
+(as_expression
+  (_) @_.leading.endOf
+  "const" @type
+) @_.domain
+
 ;;!! aaa satisfies Bbb
 ;;!                ^^^
 ;;!     xxxxxxxxxxxxxx
@@ -285,7 +340,7 @@
 ;;!                   ^^^^
 ;;!                   xxxxxx
 ;;!                   ------------
-(
+(_
   (property_signature
     name: (_) @collectionKey @type.leading.endOf
     type: (_
@@ -293,6 +348,7 @@
       (_) @type @collectionKey.trailing.startOf
     )
   ) @_.domain.start
+  .
   ";"? @_.domain.end
 )
 
@@ -317,11 +373,17 @@
 )
 
 ;; Statements with optional trailing `;`
-(
+(_
   [
     (property_signature)
     (public_field_definition)
     (abstract_method_signature)
   ] @statement.start
+  .
   ";"? @statement.end
+)
+
+;; () => number
+(function_type
+  "=>" @disqualifyDelimiter
 )

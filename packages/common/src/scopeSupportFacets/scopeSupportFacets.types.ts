@@ -1,6 +1,7 @@
-import { SimpleScopeTypeType } from "../types/command/PartialTargetDescriptor.types";
+import type { SimpleScopeTypeType } from "../types/command/PartialTargetDescriptor.types";
+import { type ScopeType } from "../types/command/PartialTargetDescriptor.types";
 
-const scopeSupportFacets = [
+export const scopeSupportFacets = [
   "command",
 
   "element",
@@ -8,6 +9,10 @@ const scopeSupportFacets = [
   "startTag",
   "endTag",
   "attribute",
+
+  "environment",
+
+  "section",
 
   "list",
   "map",
@@ -17,15 +22,33 @@ const scopeSupportFacets = [
   "fieldAccess",
 
   "statement",
+  "statement.class",
   "statement.iteration.document",
   "statement.iteration.block",
 
   "class",
+  "class.iteration.document",
+  "class.iteration.block",
+
   "className",
-  "namedFunction",
-  "namedFunction.method",
+  "className.iteration.document",
+  "className.iteration.block",
+
   "anonymousFunction",
+
+  "namedFunction",
+  "namedFunction.iteration",
+  "namedFunction.iteration.document",
+  "namedFunction.method",
+  "namedFunction.method.iteration.class",
+  "namedFunction.constructor",
+
   "functionName",
+  "functionName.iteration",
+  "functionName.iteration.document",
+  "functionName.method",
+  "functionName.method.iteration.class",
+  "functionName.constructor",
 
   "functionCall",
   "functionCall.constructor",
@@ -34,8 +57,16 @@ const scopeSupportFacets = [
 
   "argument.actual",
   "argument.actual.iteration",
+  "argument.actual.method",
+  "argument.actual.method.iteration",
+  "argument.actual.constructor",
+  "argument.actual.constructor.iteration",
   "argument.formal",
   "argument.formal.iteration",
+  "argument.formal.method",
+  "argument.formal.method.iteration",
+  "argument.formal.constructor",
+  "argument.formal.constructor.iteration",
 
   "comment.line",
   "comment.block",
@@ -43,12 +74,26 @@ const scopeSupportFacets = [
   "string.singleLine",
   "string.multiLine",
 
+  "textFragment.comment.line",
+  "textFragment.comment.block",
+  "textFragment.string.singleLine",
+  "textFragment.string.multiLine",
+  "textFragment.element",
+
+  "disqualifyDelimiter",
+  "pairDelimiter",
+
   "branch.if",
   "branch.if.iteration",
   "branch.try",
+  "branch.try.iteration",
   "branch.switchCase",
   "branch.switchCase.iteration",
   "branch.ternary",
+  "branch.loop",
+
+  "collectionItem.unenclosed",
+  "collectionItem.unenclosed.iteration",
 
   "condition.if",
   "condition.while",
@@ -56,6 +101,7 @@ const scopeSupportFacets = [
   "condition.for",
   "condition.ternary",
   "condition.switchCase",
+  "condition.switchCase.iteration",
 
   "name.assignment",
   "name.assignment.pattern",
@@ -63,10 +109,20 @@ const scopeSupportFacets = [
   "name.variable.pattern",
   "name.foreach",
   "name.function",
+  "name.method",
+  "name.constructor",
   "name.class",
   "name.field",
   "name.resource",
   "name.resource.iteration",
+  "name.argument.formal",
+  "name.argument.formal.iteration",
+  "name.argument.formal.method",
+  "name.argument.formal.method.iteration",
+  "name.argument.formal.constructor",
+  "name.argument.formal.constructor.iteration",
+  "name.iteration.block",
+  "name.iteration.document",
 
   "key.attribute",
   "key.mapPair",
@@ -74,6 +130,7 @@ const scopeSupportFacets = [
 
   "value.assignment",
   "value.variable",
+  "value.variable.pattern",
   "value.mapPair",
   "value.mapPair.iteration",
   "value.attribute",
@@ -84,41 +141,42 @@ const scopeSupportFacets = [
   "value.yield",
   "value.resource",
   "value.resource.iteration",
+  "value.argument.formal",
+  "value.argument.formal.iteration",
+  "value.argument.formal.method",
+  "value.argument.formal.method.iteration",
+  "value.argument.formal.constructor",
+  "value.argument.formal.constructor.iteration",
+  "value.typeAlias",
 
   "type.variable",
-  "type.formalParameter",
+  "type.argument.formal",
+  "type.argument.formal.iteration",
+  "type.argument.formal.method",
+  "type.argument.formal.method.iteration",
+  "type.argument.formal.constructor",
+  "type.argument.formal.constructor.iteration",
   "type.return",
   "type.field",
+  "type.field.iteration",
   "type.foreach",
   "type.interface",
   "type.alias",
+  "type.cast",
+  "type.class",
+  "type.typeArgument",
+  "type.typeArgument.iteration",
+
+  "notebookCell",
 
   // FIXME: Still in legacy
-  // section
   // selector
   // unit
-  // collectionItem
-  // textFragment
-] as const;
-
-const textualScopeSupportFacets = [
-  "character",
-  "word",
-  "token",
-  "identifier",
-  "line",
-  "sentence",
-  "paragraph",
-  "document",
-  "nonWhitespaceSequence",
-  // FIXME: Still in legacy
-  // "boundedNonWhitespaceSequence",
-  "url",
 ] as const;
 
 export interface ScopeSupportFacetInfo {
   readonly description: string;
-  readonly scopeType: SimpleScopeTypeType;
+  readonly scopeType: SimpleScopeTypeType | ScopeType;
   readonly isIteration?: boolean;
 }
 
@@ -132,7 +190,24 @@ export enum ScopeSupportFacetLevel {
 export type ScopeSupportFacet = (typeof scopeSupportFacets)[number];
 
 export type TextualScopeSupportFacet =
-  (typeof textualScopeSupportFacets)[number];
+  | "character"
+  | "word"
+  | "token"
+  | "identifier"
+  | "line"
+  | "sentence"
+  | "paragraph"
+  | "boundedParagraph"
+  | "boundedParagraph.iteration"
+  | "document"
+  | "nonWhitespaceSequence"
+  | "boundedNonWhitespaceSequence"
+  | "boundedNonWhitespaceSequence.iteration"
+  | "url"
+  | "surroundingPair"
+  | "surroundingPair.iteration"
+  | "collectionItem.textual"
+  | "collectionItem.textual.iteration";
 
 export type LanguageScopeSupportFacetMap = Partial<
   Record<ScopeSupportFacet, ScopeSupportFacetLevel>

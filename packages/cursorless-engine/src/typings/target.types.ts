@@ -28,6 +28,7 @@ import type {
 import type { EditWithRangeUpdater } from "./Types";
 
 export type EditNewActionType = "edit" | "insertLineAfter";
+export type JoinAsType = "line" | "token";
 
 export interface Target {
   /** The text editor used for all ranges */
@@ -53,6 +54,9 @@ export interface Target {
 
   /** If true this target should be treated as a word */
   readonly isWord: boolean;
+
+  /** Specifies how a target should be joined */
+  readonly joinAs: JoinAsType;
 
   /**
    * If `true`, then this target has an explicit scope type, and so should never
@@ -132,8 +136,8 @@ export interface Target {
   /** Internal target that should be used for the that mark */
   readonly thatTarget: Target;
 
-  getInteriorStrict(): Target[];
-  getBoundaryStrict(): Target[];
+  getInterior(): Target[] | undefined;
+  getBoundary(): Target[] | undefined;
   /** The range of the delimiter before the content selection */
   getLeadingDelimiterTarget(): Target | undefined;
   /** The range of the delimiter after the content selection */
@@ -216,5 +220,8 @@ export interface Destination {
   withTarget(target: Target): Destination;
   getEditNewActionType(): EditNewActionType;
   /** Constructs change/insertion edit. Adds delimiter before/after if needed */
-  constructChangeEdit(text: string): EditWithRangeUpdater;
+  constructChangeEdit(
+    text: string,
+    skipIndentation?: boolean,
+  ): EditWithRangeUpdater;
 }

@@ -1,19 +1,29 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
-import {
-  LanguageScopeSupportFacetMap,
-  ScopeSupportFacetLevel,
-} from "./scopeSupportFacets.types";
+import { javascriptCoreScopeSupport } from "./javascript";
+import type { LanguageScopeSupportFacetMap } from "./scopeSupportFacets.types";
+import { ScopeSupportFacetLevel } from "./scopeSupportFacets.types";
 
 const { supported } = ScopeSupportFacetLevel;
 
 export const typescriptScopeSupport: LanguageScopeSupportFacetMap = {
-  "type.variable": supported,
-  "type.formalParameter": supported,
-  "type.return": supported,
+  ...javascriptCoreScopeSupport,
+
+  "name.field": supported,
+
+  "type.argument.formal": supported,
+  "type.argument.formal.iteration": supported,
+  "type.argument.formal.method": supported,
+  "type.argument.formal.method.iteration": supported,
+  "type.argument.formal.constructor": supported,
+  "type.argument.formal.constructor.iteration": supported,
+  "type.alias": supported,
+  "type.cast": supported,
   "type.field": supported,
   "type.interface": supported,
-  "type.alias": supported,
-  "name.field": supported,
+  "type.return": supported,
+  "type.variable": supported,
+
   "value.field": supported,
+  "value.typeAlias": supported,
+
+  disqualifyDelimiter: supported,
 };

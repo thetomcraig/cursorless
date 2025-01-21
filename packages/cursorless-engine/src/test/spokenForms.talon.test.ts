@@ -1,21 +1,21 @@
-import {
+import type {
   Command,
   CommandLatest,
   TestCaseFixtureLegacy,
-  asyncSafety,
-  getRecordedTestPaths,
 } from "@cursorless/common";
+import { asyncSafety } from "@cursorless/common";
+import { getRecordedTestPaths } from "@cursorless/node-common";
 import assert from "assert";
 import * as yaml from "js-yaml";
 import { promises as fsp } from "node:fs";
 import { canonicalizeAndValidateCommand } from "../core/commandVersionUpgrades/canonicalizeAndValidateCommand";
 import { getHatMapCommand } from "../generateSpokenForm/getHatMapCommand";
 import { TalonRepl } from "../testUtil/TalonRepl";
+import { communitySnippetsSpokenFormsFixture } from "./fixtures/communitySnippets.fixture";
+import { multiActionFixture } from "./fixtures/multiAction.fixture";
+import type { SpokenFormTestOpts } from "./fixtures/spokenFormTest";
 import { synonymousSpokenFormsFixture } from "./fixtures/synonymousSpokenForms.fixture";
 import { talonApiFixture } from "./fixtures/talonApi.fixture";
-import { multiActionFixture } from "./fixtures/multiAction.fixture";
-import { communitySnippetsSpokenFormsFixture } from "./fixtures/communitySnippets.fixture";
-import { SpokenFormTestOpts } from "./fixtures/spokenFormTest";
 
 suite("Talon spoken forms", async function () {
   const repl = new TalonRepl();
@@ -121,7 +121,7 @@ async function runTest(
     const commandsActual = (() => {
       try {
         return JSON.parse(result);
-      } catch (e) {
+      } catch (_e) {
         throw Error(result);
       }
     })();

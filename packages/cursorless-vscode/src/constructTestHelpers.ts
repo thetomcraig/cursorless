@@ -1,4 +1,4 @@
-import {
+import type {
   ExcludableSnapshotField,
   ExtraSnapshotField,
   FakeCommandServerApi,
@@ -12,17 +12,16 @@ import {
   TestCaseSnapshot,
   TextEditor,
 } from "@cursorless/common";
-import {
-  StoredTargetMap,
-  plainObjectToTarget,
-  takeSnapshot,
-} from "@cursorless/cursorless-engine";
-import { TestHelpers } from "@cursorless/vscode-common";
-import * as vscode from "vscode";
-import { VscodeFileSystem } from "./ide/vscode/VscodeFileSystem";
-import { VscodeIDE } from "./ide/vscode/VscodeIDE";
+import type { StoredTargetMap } from "@cursorless/cursorless-engine";
+import { plainObjectToTarget } from "@cursorless/cursorless-engine";
+import type { VscodeTestHelpers } from "@cursorless/vscode-common";
+import type * as vscode from "vscode";
+import { takeSnapshot } from "@cursorless/test-case-recorder";
+import type { VscodeFileSystem } from "./ide/vscode/VscodeFileSystem";
+import type { VscodeIDE } from "./ide/vscode/VscodeIDE";
 import { toVscodeEditor } from "./ide/vscode/toVscodeEditor";
 import { vscodeApi } from "./vscodeApi";
+import type { VscodeTutorial } from "./VscodeTutorial";
 
 export function constructTestHelpers(
   commandServerApi: FakeCommandServerApi,
@@ -34,7 +33,8 @@ export function constructTestHelpers(
   scopeProvider: ScopeProvider,
   injectIde: (ide: IDE) => void,
   runIntegrationTests: () => Promise<void>,
-): TestHelpers | undefined {
+  vscodeTutorial: VscodeTutorial,
+): VscodeTestHelpers | undefined {
   return {
     commandServerApi: commandServerApi!,
     ide: normalizedIde,
@@ -42,6 +42,9 @@ export function constructTestHelpers(
     scopeProvider,
 
     toVscodeEditor,
+    fromVscodeEditor(editor: vscode.TextEditor): TextEditor {
+      return vscodeIDE.fromVscodeEditor(editor);
+    },
 
     // FIXME: Remove this once we have a better way to get this function
     // accessible from our tests
@@ -51,7 +54,6 @@ export function constructTestHelpers(
       editor: TextEditor,
       ide: IDE,
       marks: SerializedMarks | undefined,
-      forceRealClipboard: boolean,
     ): Promise<TestCaseSnapshot> {
       return takeSnapshot(
         storedTargets,
@@ -62,7 +64,6 @@ export function constructTestHelpers(
         marks,
         undefined,
         undefined,
-        forceRealClipboard ? vscodeIDE.clipboard : undefined,
       );
     },
 
@@ -70,19 +71,20 @@ export function constructTestHelpers(
     cursorlessCommandHistoryDirPath: fileSystem.cursorlessCommandHistoryDirPath,
 
     setStoredTarget(
-      editor: vscode.TextEditor,
+      editor: TextEditor,
       key: StoredTargetKey,
       targets: TargetPlainObject[] | undefined,
     ): void {
       storedTargets.set(
         key,
-        targets?.map((target) =>
-          plainObjectToTarget(vscodeIDE.fromVscodeEditor(editor), target),
-        ),
+        targets?.map((target) => plainObjectToTarget(editor, target)),
       );
     },
     hatTokenMap,
     runIntegrationTests,
     vscodeApi,
+    getTutorialWebviewEventLog() {
+      return vscodeTutorial.getEventLog();
+    },
   };
 }

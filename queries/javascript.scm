@@ -6,7 +6,7 @@
 
 ;; Define this here because the `field_definition` node type doesn't exist
 ;; in typescript.
-(
+(_
   ;;!! class Foo {
   ;;!!   foo = () => {};
   ;;!    ^^^^^^^^^^^^^^^
@@ -18,7 +18,7 @@
   (field_definition
     property: (_) @functionName
     value: [
-      (function
+      (function_expression
         !name
       )
       (generator_function
@@ -31,7 +31,7 @@
   ";"? @namedFunction.end @functionName.domain.end
 )
 
-(
+(_
   ;;!! foo = ...;
   ;;!  ^^^-------
   (field_definition
@@ -40,4 +40,19 @@
   ) @_.domain.start
   .
   ";"? @_.domain.end
+)
+
+;;!! foo(name) {}
+;;!      ^^^^
+(formal_parameters
+  (identifier) @name
+)
+
+;;!! foo(value = 5) {}
+;;!      ^^^^^   ^
+(formal_parameters
+  (assignment_pattern
+    left: (_) @name @value.leading.endOf
+    right: (_) @value
+  ) @_.domain
 )

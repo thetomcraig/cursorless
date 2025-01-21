@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { FontMeasurements } from "./FontMeasurements";
+import type { FontMeasurements } from "./FontMeasurements";
 
 /**
  * Contains measurements for the user's font
@@ -20,8 +20,8 @@ export class FontMeasurementsImpl implements FontMeasurements {
 
   constructor(private extensionContext: vscode.ExtensionContext) {}
 
-  clearCache() {
-    this.extensionContext.globalState.update("fontRatios", undefined);
+  async clearCache() {
+    await this.extensionContext.globalState.update("fontRatios", undefined);
   }
 
   async calculate() {
@@ -35,7 +35,7 @@ export class FontMeasurementsImpl implements FontMeasurements {
 
     if (fontRatiosCache == null || fontRatiosCache.fontFamily !== fontFamily) {
       const fontRatios = await getFontRatios(this.extensionContext);
-      this.extensionContext.globalState.update("fontRatios", {
+      await this.extensionContext.globalState.update("fontRatios", {
         ...fontRatios,
         fontFamily,
       });
@@ -70,14 +70,14 @@ function getFontRatios(extensionContext: vscode.ExtensionContext) {
     },
   );
 
-  const font_measurement_js = panel.webview.asWebviewUri(
+  const fontMeasurementJs = panel.webview.asWebviewUri(
     vscode.Uri.joinPath(
       extensionContext.extensionUri,
       "resources",
       "font_measurements.js",
     ),
   );
-  panel.webview.html = getWebviewContent(panel.webview, font_measurement_js);
+  panel.webview.html = getWebviewContent(panel.webview, fontMeasurementJs);
 
   interface FontRatios {
     /**
@@ -112,7 +112,7 @@ function getFontFamily() {
 
 function getWebviewContent(
   webview: vscode.Webview,
-  font_measurement_js: vscode.Uri,
+  fontMeasurementJs: vscode.Uri,
 ) {
   // baseline adjustment based on https://stackoverflow.com/a/27295528
   return `<!DOCTYPE html>
@@ -126,7 +126,7 @@ function getWebviewContent(
       <div id="container">
       <span id="letter" style="line-height: 0; visibility:hidden; font-size: 1000px; font-family: var(--vscode-editor-font-family);  font-weight: var(--vscode-editor-font-weight);">A</span>
       </div>
-      <script src="${font_measurement_js}"></script>
+      <script src="${fontMeasurementJs}"></script>
   </body>
   </html>`;
 }

@@ -2,7 +2,6 @@ import { showError, simpleScopeTypeTypes } from "@cursorless/common";
 import { ide } from "../../singletons/ide.singleton";
 
 const wildcard = "_";
-const textFragment = "textFragment";
 const captureNames = [wildcard, ...simpleScopeTypeTypes];
 
 const positionRelationships = ["prefix", "leading", "trailing"];
@@ -25,12 +24,6 @@ const rangeSuffixes = [
 ];
 
 const allowedCaptures = new Set<string>();
-
-allowedCaptures.add(textFragment);
-
-for (const suffix of rangeSuffixes) {
-  allowedCaptures.add(`${textFragment}.${suffix}`);
-}
 
 for (const captureName of captureNames) {
   // Wildcard is not allowed by itself without a relationship
@@ -87,7 +80,7 @@ export function validateQueryCaptures(file: string, rawQuery: string): void {
     }
 
     if (!allowedCaptures.has(captureName)) {
-      const lineNumber = match.input!.slice(0, match.index!).split("\n").length;
+      const lineNumber = match.input.slice(0, match.index).split("\n").length;
       errors.push(`${file}(${lineNumber}) invalid capture '@${captureName}'.`);
     }
   }
@@ -98,7 +91,7 @@ export function validateQueryCaptures(file: string, rawQuery: string): void {
 
   const message = errors.join("\n");
 
-  showError(
+  void showError(
     ide().messages,
     "validateQueryCaptures.invalidCaptureName",
     message,

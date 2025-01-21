@@ -1,9 +1,17 @@
 import type { ScopeType } from "@cursorless/common";
-import { LanguageDefinitions } from "../../../languages/LanguageDefinitions";
+import type { LanguageDefinitions } from "../../../languages/LanguageDefinitions";
+import {
+  BoundedNonWhitespaceSequenceScopeHandler,
+  BoundedParagraphScopeHandler,
+} from "./BoundedScopeHandler";
 import { CharacterScopeHandler } from "./CharacterScopeHandler";
+import { CollectionItemScopeHandler } from "./CollectionItemScopeHandler/CollectionItemScopeHandler";
+import { ConditionalScopeHandler } from "./ConditionalScopeHandler";
 import { DocumentScopeHandler } from "./DocumentScopeHandler";
+import { FallbackScopeHandler } from "./FallbackScopeHandler";
 import { IdentifierScopeHandler } from "./IdentifierScopeHandler";
 import { LineScopeHandler } from "./LineScopeHandler";
+import { NotebookCellScopeHandler } from "./NotebookCellScopeHandler";
 import { OneOfScopeHandler } from "./OneOfScopeHandler";
 import { ParagraphScopeHandler } from "./ParagraphScopeHandler";
 import {
@@ -12,11 +20,15 @@ import {
   NonWhitespaceSequenceScopeHandler,
   UrlScopeHandler,
 } from "./RegexScopeHandler";
-import { ScopeHandlerFactory } from "./ScopeHandlerFactory";
+import type { ScopeHandlerFactory } from "./ScopeHandlerFactory";
 import { SentenceScopeHandler } from "./SentenceScopeHandler/SentenceScopeHandler";
+import {
+  SurroundingPairInteriorScopeHandler,
+  SurroundingPairScopeHandler,
+} from "./SurroundingPairScopeHandler";
 import { TokenScopeHandler } from "./TokenScopeHandler";
 import { WordScopeHandler } from "./WordScopeHandler/WordScopeHandler";
-import type { CustomScopeType, ScopeHandler } from "./scopeHandler.types";
+import type { ComplexScopeType, ScopeHandler } from "./scopeHandler.types";
 
 /**
  * Returns a scope handler for the given scope type and language id, or
@@ -37,11 +49,12 @@ import type { CustomScopeType, ScopeHandler } from "./scopeHandler.types";
  */
 export class ScopeHandlerFactoryImpl implements ScopeHandlerFactory {
   constructor(private languageDefinitions: LanguageDefinitions) {
+    this.maybeCreate = this.maybeCreate.bind(this);
     this.create = this.create.bind(this);
   }
 
-  create(
-    scopeType: ScopeType | CustomScopeType,
+  maybeCreate(
+    scopeType: ScopeType | ComplexScopeType,
     languageId: string,
   ): ScopeHandler | undefined {
     switch (scopeType.type) {
@@ -59,12 +72,18 @@ export class ScopeHandlerFactoryImpl implements ScopeHandlerFactory {
         return new SentenceScopeHandler(this, scopeType, languageId);
       case "paragraph":
         return new ParagraphScopeHandler(scopeType, languageId);
+      case "boundedParagraph":
+        return new BoundedParagraphScopeHandler(this, scopeType, languageId);
       case "document":
         return new DocumentScopeHandler(scopeType, languageId);
-      case "oneOf":
-        return OneOfScopeHandler.create(this, scopeType, languageId);
       case "nonWhitespaceSequence":
         return new NonWhitespaceSequenceScopeHandler(
+          this,
+          scopeType,
+          languageId,
+        );
+      case "boundedNonWhitespaceSequence":
+        return new BoundedNonWhitespaceSequenceScopeHandler(
           this,
           scopeType,
           languageId,
@@ -75,8 +94,39 @@ export class ScopeHandlerFactoryImpl implements ScopeHandlerFactory {
         return new CustomRegexScopeHandler(this, scopeType, languageId);
       case "glyph":
         return new GlyphScopeHandler(this, scopeType, languageId);
+      case "collectionItem":
+        return new CollectionItemScopeHandler(
+          this,
+          this.languageDefinitions,
+          languageId,
+        );
+      case "surroundingPair":
+        return new SurroundingPairScopeHandler(
+          this.languageDefinitions,
+          scopeType,
+          languageId,
+        );
+      case "surroundingPairInterior":
+        return new SurroundingPairInteriorScopeHandler(
+          this,
+          scopeType,
+          languageId,
+        );
+      case "notebookCell":
+        return new NotebookCellScopeHandler(
+          this,
+          this.languageDefinitions,
+          scopeType,
+          languageId,
+        );
       case "custom":
         return scopeType.scopeHandler;
+      case "oneOf":
+        return OneOfScopeHandler.create(this, scopeType, languageId);
+      case "fallback":
+        return new FallbackScopeHandler(this, scopeType, languageId);
+      case "conditional":
+        return new ConditionalScopeHandler(this, scopeType, languageId);
       case "instance":
         // Handle instance pseudoscope with its own special modifier
         throw Error("Unexpected scope type 'instance'");
@@ -85,5 +135,16 @@ export class ScopeHandlerFactoryImpl implements ScopeHandlerFactory {
           .get(languageId)
           ?.getScopeHandler(scopeType);
     }
+  }
+
+  create(
+    scopeType: ScopeType | ComplexScopeType,
+    languageId: string,
+  ): ScopeHandler {
+    const handler = this.maybeCreate(scopeType, languageId);
+    if (handler == null) {
+      throw new Error(`Couldn't create scope handler for '${scopeType.type}'`);
+    }
+    return handler;
   }
 }
