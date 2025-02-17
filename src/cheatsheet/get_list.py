@@ -40,7 +40,7 @@ def get_raw_list(name: str) -> Mapping[str, str]:
     return registry.lists[cursorless_list_name][0].copy()
 
 
-def get_spoken_form_from_list(list_name: str, value: str) -> str:
+def get_spoken_form_from_list(list_name: str, value: str) -> str | None:
     """Get the spoken form of a value from a list.
 
     Args:
@@ -48,10 +48,15 @@ def get_spoken_form_from_list(list_name: str, value: str) -> str:
         value (str): The value to look up.
 
     Returns:
-        str: The spoken form of the value.
+        str: The spoken form of the value if found, otherwise None.
     """
     return next(
-        spoken_form for spoken_form, v in get_raw_list(list_name).items() if v == value
+        (
+            spoken_form
+            for spoken_form, v in get_raw_list(list_name).items()
+            if v == value
+        ),
+        None,
     )
 
 

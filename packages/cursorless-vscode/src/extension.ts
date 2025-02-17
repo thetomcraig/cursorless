@@ -194,6 +194,7 @@ export async function activate(
     vscodeTutorial,
     installationDependencies,
     storedTargets,
+    snippets,
   );
 
   void new ReleaseNotes(vscodeApi, context, normalizedIde.messages).maybeShow();
@@ -216,10 +217,6 @@ export async function activate(
             vscodeTutorial,
           )
         : undefined,
-
-    experimental: {
-      registerThirdPartySnippets: snippets.registerThirdPartySnippets,
-    },
   };
 }
 

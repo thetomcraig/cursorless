@@ -158,6 +158,12 @@
 
 ;;!! with aaa:
 ;;!       ^^^
+(with_statement
+  body: (_) @interior
+) @interior.domain
+
+;;!! with aaa:
+;;!       ^^^
 ;;!  --------
 (
   (with_statement
@@ -235,11 +241,9 @@
   (#allow-multiple! @name)
 )
 
-(
-  (with_statement
-    (with_clause) @value.iteration @name.iteration
-  ) @value.iteration.domain @name.iteration.domain
-)
+(with_statement
+  (with_clause) @value.iteration @name.iteration
+) @value.iteration.domain @name.iteration.domain
 
 ;;!! lambda str: len(str) > 0
 ;;!              ^^^^^^^^^^^^
@@ -282,30 +286,30 @@
 (
   (function_definition
     name: (_) @functionName
-    body: (_) @namedFunction.interior
-  ) @namedFunction @functionName.domain
+    body: (_) @interior
+  ) @namedFunction @functionName.domain @interior.domain
   (#not-parent-type? @namedFunction decorated_definition)
 )
 (decorated_definition
   (function_definition
     name: (_) @functionName
-    body: (_) @namedFunction.interior
+    body: (_) @interior
   )
-) @namedFunction @functionName.domain
+) @namedFunction @functionName.domain @interior.domain
 
 (
   (class_definition
     name: (_) @className
-    body: (_) @class.interior
-  ) @class @className.domain
+    body: (_) @interior
+  ) @class @className.domain @interior.domain
   (#not-parent-type? @class decorated_definition)
 )
 (decorated_definition
   (class_definition
     name: (_) @className
-    body: (_) @class.interior
+    body: (_) @interior
   )
-) @class @className.domain
+) @class @className.domain @interior.domain
 
 (module) @className.iteration @class.iteration
 (module) @statement.iteration
@@ -362,13 +366,14 @@
 ;;!! lambda _: pass
 ;;!  ^^^^^^^^^^^^^^
 (lambda
-  body: (_) @anonymousFunction.interior
-) @anonymousFunction
+  body: (_) @interior
+) @anonymousFunction @interior.domain
 
 ;;!! match value:
 ;;!        ^^^^^
 (match_statement
   subject: (_) @private.switchStatementSubject
+  body: (_) @interior
 ) @_.domain
 
 ;;!! { "value": 0 }
@@ -394,6 +399,7 @@
 (case_clause
   (case_pattern) @condition.start
   guard: (_)? @condition.end
+  consequence: (_) @interior
 ) @_.domain
 
 ;;!! case 0: pass
@@ -407,17 +413,17 @@
 ;;!  ----------------
 (
   (conditional_expression
-    "if"
+    "if" @interior.domain.start
     .
-    (_) @condition
-  ) @_.domain
+    (_) @condition @interior @interior.domain.end
+  ) @condition.domain
 )
 
 ;;!! 1 if True else 0
 ;;!  ^
 (
   (conditional_expression
-    (_) @branch
+    (_) @branch @interior
     .
     "if"
   )
@@ -427,9 +433,9 @@
 ;;!                 ^
 (
   (conditional_expression
-    "else"
+    "else" @interior.domain.start
     .
-    (_) @branch
+    (_) @branch @interior @interior.domain.end
   )
 )
 
@@ -456,37 +462,48 @@
 ;;!! if True: pass
 ;;!  ^^^^^^^^^^^^^
 (if_statement
-  "if" @branch.start
-  consequence: (_) @branch.end
+  "if" @branch.start @interior.domain.start
+  consequence: (_) @branch.end @interior @interior.domain.end
 )
 
 ;;!! elif True: pass
 ;;!  ^^^^^^^^^^^^^^^
-(elif_clause) @branch
+(elif_clause
+  consequence: (_) @interior
+) @branch @interior.domain
 
 ;;!! else: pass
 ;;!  ^^^^^^^^^^
-(else_clause) @branch
+(else_clause
+  body: (_) @interior
+) @branch @interior.domain
 
 (if_statement) @branch.iteration
 
 ;;!! try: pass
 ;;!  ^^^^^^^^^
 (try_statement
-  "try" @branch.start
-  body: (_) @branch.end
+  "try" @branch.start @interior.domain.start
+  body: (_) @branch.end @interior @interior.domain.end
 )
 
 ;;!! except: pass
 ;;!  ^^^^^^^^^^^^
-[
-  (except_clause)
-  (except_group_clause)
-] @branch
+(except_clause
+  (block) @interior
+) @branch @interior.domain
+
+;;!! except*: pass
+;;!  ^^^^^^^^^^^^^
+(except_group_clause
+  (block) @interior
+) @branch @interior.domain
 
 ;;!! finally: pass
 ;;!  ^^^^^^^^^^^^^
-(finally_clause) @branch
+(finally_clause
+  (block) @interior
+) @branch @interior.domain
 
 (try_statement) @branch.iteration
 
@@ -494,8 +511,8 @@
 ;;!  ^^^^^^^^^^^^^^^^
 (while_statement
   "while" @branch.start
-  body: (_) @branch.end
-)
+  body: (_) @branch.end @interior
+) @interior.domain
 
 (while_statement) @branch.iteration
 
@@ -503,8 +520,8 @@
 ;;!  ^^^^^^^^^^^^^^^^^^^^
 (for_statement
   "for" @branch.start
-  body: (_) @branch.end
-)
+  body: (_) @branch.end @interior
+) @interior.domain
 
 (for_statement) @branch.iteration
 
@@ -589,7 +606,9 @@
     .
     (_) @argumentOrParameter
     .
-    (_)? @_.trailing.startOf
+    ","? @_.trailing.start.endOf
+    .
+    (_)? @_.trailing.end.startOf
   ) @_dummy
   (#not-type? @argumentOrParameter "comment")
   (#single-or-multi-line-delimiter! @argumentOrParameter @_dummy ", " ",\n")
@@ -603,7 +622,9 @@
     .
     (_) @argumentOrParameter
     .
-    (_)? @_.trailing.startOf
+    ","? @_.trailing.start.endOf
+    .
+    (_)? @_.trailing.end.startOf
   ) @_dummy
   (#not-type? @argumentOrParameter "comment")
   (#single-or-multi-line-delimiter! @argumentOrParameter @_dummy ", " ",\n")
@@ -626,9 +647,9 @@
 ) @argumentOrParameter.iteration.domain
 
 (argument_list
-  "(" @argumentOrParameter.iteration.start.endOf
-  ")" @argumentOrParameter.iteration.end.startOf
-) @argumentOrParameter.iteration.domain
+  "(" @argumentOrParameter.iteration.start.endOf @name.iteration.start.endOf @value.iteration.start.endOf
+  ")" @argumentOrParameter.iteration.end.startOf @name.iteration.end.startOf @value.iteration.end.startOf
+) @argumentOrParameter.iteration.domain @name.iteration.domain @value.iteration.domain
 
 (call
   (generator_expression

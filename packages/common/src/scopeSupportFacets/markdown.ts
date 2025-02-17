@@ -7,6 +7,12 @@ const { supported, unsupported, notApplicable } = ScopeSupportFacetLevel;
 export const markdownScopeSupport: LanguageScopeSupportFacetMap = {
   "comment.line": supported,
   "comment.block": supported,
+
   section: supported,
+  "section.iteration.document": supported,
+  "section.iteration.parent": supported,
+
   notebookCell: supported,
+  "interior.cell": supported,
+  "collectionItem.unenclosed": supported,
 };
